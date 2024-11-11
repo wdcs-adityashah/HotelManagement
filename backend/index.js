@@ -70,6 +70,7 @@ io.on('connection', (socket) => {
             console.error("Received data is not an object:", data);
         }
     });
+
     socket.on('disconnect', () => {
         console.log('Client disconnected:', socket.id);
     });

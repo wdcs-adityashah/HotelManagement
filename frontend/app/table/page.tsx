@@ -54,7 +54,7 @@ const Table = () => {
       setReservedTables(JSON.parse(storedReservedTables));
     }
 
-    socketRef.current = io('http://localhost:2000');
+    socketRef.current = io('http://192.168.109.149:2000');
 
     socketRef.current.on('table-reservation-updated', (data: Reservation) => {
       setReservedTables(prev => {
@@ -72,6 +72,10 @@ const Table = () => {
         return prev; // No change
       });
     });
+    socketRef.current.on('table-reservation-deleted', (data: { tableNumber: number }) => {
+      console.log('Received table-reservation-deleted event:', data);
+      setReservedTables(prev => prev.filter(res => res !== data.tableNumber)); // Remove deleted reservation
+  });
 
     return () => {
       socketRef.current?.disconnect();

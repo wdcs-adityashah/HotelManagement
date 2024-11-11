@@ -13,7 +13,7 @@ const TableReservationStatus = () => {
     useEffect(() => {
 
     
-        socket.current = io('http://localhost:2000');
+        socket.current = io('http://192.168.109.149:2000');
        
 
         socket.current.on('table-reservation-updated', (data: Reservation) => {
@@ -32,10 +32,14 @@ const TableReservationStatus = () => {
             console.log('User  logged out. Fetching updated reservations...');
             fetchReservations(); // Fetch the latest reservations
         });
-    
+        socket.current.on('table-reservation-deleted', (data: { tableNumber: number }) => {
+            console.log('Received table-reservation-deleted event:', data);
+            setReservations(prev => prev.filter(res => res.tableNumber !== data.tableNumber)); // Remove deleted reservation
+        });
+
 
         const fetchReservations = async () => {
-            const response = await fetch('http://localhost:2000/api/tables/reservations');
+            const response = await fetch('http://192.168.109.149:2000/api/tables/reservations');
             const data = await response.json();
             setReservations(data);
         };
@@ -47,7 +51,7 @@ const TableReservationStatus = () => {
     }, []);
 
     const handleReserveTable = async (tableNumber: number, isReserved: boolean) => {
-        const response = await fetch('http://localhost:2000/api/tables/reserve-table', {
+        const response = await fetch('http://192.168.109.149:2000/api/tables/reserve-table', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -61,19 +65,22 @@ const TableReservationStatus = () => {
         }
     
         const data: Reservation = await response.json();
-    
-        // Emit the reservation update event
         socket.current?.emit('table-reservation-updated', data);
-    
         setReservations(prev => {
             const index = prev.findIndex(res => res.tableNumber === data.tableNumber);
             if (index > -1) {
                 const updatedReservations = [...prev];
-                updatedReservations[index] = data; // Update reservation status
+                if (data.isReserved) {
+                    updatedReservations[index] = data; // Update reservation status
+                } else {
+                    socket.current?.emit('table-reservation-deleted',data);
+                    updatedReservations.splice(index, 1); 
+                }
                 return updatedReservations;
             }
             return [...prev, data]; // Add new reservation if it doesn't exist
         });
+    
     };
     const allTables = Array.from({ length: 10 }, (_, i) => i + 1);
     const reservedTableNumbers = reservations.filter(res => res.isReserved).map(res => res.tableNumber);
@@ -92,7 +99,7 @@ const TableReservationStatus = () => {
                         </tr>
                     </thead>
                     <tbody className="text-gray-600 text-sm font-light">
-                   {reservedTableNumbers.length>0?(
+                    {reservedTableNumbers.length>0?(
                     reservations.filter(reservation => reservation.isReserved).map(reservation => (
                         <tr key={reservation.tableNumber} className="border-b hover:bg-gray-100">
                             <td className="border px-4 py-2">{reservation.tableNumber}</td>

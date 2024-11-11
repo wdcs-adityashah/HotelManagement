@@ -14,9 +14,6 @@ const Header = () => {
         <Link href={"/menulist"} className="text-lg font-medium hover:text-gray-200 transition-colors">
            Menu Management
         </Link>
-        <Link href={"/billgenerated"} className="text-lg font-medium hover:text-gray-200 transition-colors">
-          Invoice 
-        </Link>
       </nav>
     </header>
   );
