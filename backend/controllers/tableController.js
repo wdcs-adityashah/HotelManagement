@@ -13,7 +13,11 @@ export const UpdateTableReservation = async (req,res) =>{
             tableNumber: reservation.tableNumber,
             isReserved: reservation.isReserved
         });
-                return res.status(200).json(reservation);
+        if(reservation.isReserved === "false"){
+            await TableReservation.findOneAndDelete({ tableNumber });
+
+        }
+        return res.status(200).json(reservation);
     } catch (error) {
         console.error("Error updating table reservation:",error);
         return res.status(500).json({message:"Failed to update table reservation."});
